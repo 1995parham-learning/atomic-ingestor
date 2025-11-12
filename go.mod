@@ -1,4 +1,4 @@
-module code
+module github.com/1995parham-learning/interface-ai-coding-challenge
 
 go 1.25.4
 
