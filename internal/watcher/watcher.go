@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -29,9 +30,10 @@ func New(method, watchPath string) (*Watcher, error) {
 		watchPath: watchPath,
 	}
 
-	if method == "stability_window" {
+	switch method {
+	case config.MethodStabilityWindow:
 		w.modification = &sync.Map{}
-	} else if method == "sidecar" {
+	case config.MethodSidecar:
 		w.completed = &sync.Map{}
 	}
 

@@ -84,7 +84,7 @@ func (p *Processor) processFile(filePath string) error {
 
 		// Ensure destination directory exists
 		dstDir := filepath.Dir(dstPath)
-		if err := os.MkdirAll(dstDir, 0755); err != nil {
+		if err := os.MkdirAll(dstDir, 0o755); err != nil {
 			return err
 		}
 

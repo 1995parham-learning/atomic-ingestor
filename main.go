@@ -51,7 +51,11 @@ func main() {
 		slog.Error("failed to create watcher", "error", err)
 		os.Exit(1)
 	}
-	defer w.Close()
+	defer func() {
+		if err := w.Close(); err != nil {
+			slog.Error("failed to close watcher", "error", err)
+		}
+	}()
 
 	if err := w.Start(); err != nil {
 		slog.Error("failed to start watcher", "path", cfg.Path, "error", err)
