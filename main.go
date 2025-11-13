@@ -84,7 +84,7 @@ func main() {
 	}
 
 	// Initialize file watcher
-	w, err := watcher.New(cfg.Method, cfg.Path)
+	w, err := watcher.New(cfg.Method, cfg.Path, cfg.StabilitySeconds)
 	if err != nil {
 		slog.Error("failed to create watcher", "error", err)
 		os.Exit(1)
