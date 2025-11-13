@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log/slog"
 	"os"
 	"time"
@@ -14,17 +15,54 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	cfg := &config.Config{}
+
+	flag.StringVar(&cfg.Path, "input", config.DefaultInputPath, "Input directory to monitor")
+	flag.StringVar(&cfg.Destination, "warehouse", config.DefaultWarehousePath, "Warehouse directory for ingested files")
+	flag.StringVar(&cfg.ManifestsPath, "manifests", config.DefaultManifestsPath, "Manifests directory")
+	flag.StringVar(&cfg.Method, "mode", config.DefaultMethod, "Completion detection mode (stability_window or sidecar)")
+	flag.IntVar(&cfg.StabilitySeconds, "stability-seconds", config.DefaultStabilitySeconds, "Stability window duration in seconds")
+	flag.StringVar(&cfg.StatePath, "state-path", config.DefaultStatePath, "Path to state database file")
+	flag.StringVar(&cfg.LogLevel, "log-level", config.DefaultLogLevel, "Log level (debug, info, warn, error)")
+	flag.IntVar(&cfg.Concurrency, "concurrency", config.DefaultConcurrency, "Number of concurrent workers")
+	flag.BoolVar(&cfg.DryRun, "dry-run", false, "Dry run mode (do not actually move files)")
+
+	flag.Parse()
+
+	// Parse log level
+	var logLevel slog.Level
+	switch cfg.LogLevel {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "info":
+		logLevel = slog.LevelInfo
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	default:
+		slog.Error("invalid log level", "level", cfg.LogLevel)
+		os.Exit(1)
+	}
+
 	// Initialize structured logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
-		Level: slog.LevelInfo,
+		Level: logLevel,
 	}))
 	slog.SetDefault(logger)
 
-	cfg := &config.Config{
-		Path:        "files",
-		Method:      config.MethodSidecar,
-		Destination: "dest",
-	}
+	slog.Info("starting atomic ingestor",
+		"input", cfg.Path,
+		"warehouse", cfg.Destination,
+		"manifests", cfg.ManifestsPath,
+		"mode", cfg.Method,
+		"stability_seconds", cfg.StabilitySeconds,
+		"state_path", cfg.StatePath,
+		"log_level", cfg.LogLevel,
+		"concurrency", cfg.Concurrency,
+		"dry_run", cfg.DryRun,
+	)
 
 	// Validate configuration
 	if cfg.Method != config.MethodStabilityWindow && cfg.Method != config.MethodSidecar {
@@ -33,7 +71,7 @@ func main() {
 	}
 
 	// Initialize database
-	db, err := gorm.Open(sqlite.Open("gorm.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open(cfg.StatePath), &gorm.Config{})
 	if err != nil {
 		slog.Error("failed to open database", "error", err)
 		os.Exit(1)

@@ -11,23 +11,27 @@ import (
 )
 
 type Watcher struct {
-	fsWatcher    *fsnotify.Watcher
-	modification *sync.Map
-	completed    *sync.Map
-	method       string
-	watchPath    string
+	fsWatcher        *fsnotify.Watcher
+	modification     *sync.Map
+	completed        *sync.Map
+	method           string
+	watchPath        string
+	stabilitySeconds int
 }
 
-func New(method, watchPath string) (*Watcher, error) {
+func New(method, watchPath string, stabilitySeconds int) (*Watcher, error) {
 	fsWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
 	}
 
 	w := &Watcher{
-		fsWatcher: fsWatcher,
-		method:    method,
-		watchPath: watchPath,
+		fsWatcher:        fsWatcher,
+		method:           method,
+		watchPath:        watchPath,
+		stabilitySeconds: stabilitySeconds,
+		completed:        nil,
+		modification:     nil,
 	}
 
 	switch method {
@@ -93,7 +97,7 @@ func (w *Watcher) GetFilesToProcess() []string {
 			name := key.(string)
 			mtime := value.(time.Time)
 
-			if mtime.Add(10 * time.Second).Before(time.Now()) {
+			if mtime.Add(time.Duration(w.stabilitySeconds) * time.Second).Before(time.Now()) {
 				toProcess = append(toProcess, name)
 			}
 
