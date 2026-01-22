@@ -1,4 +1,4 @@
-# Filesystem Programming Challenge — “Atomic Ingestor”
+# Filesystem Programming Challenge — "Atomic Ingestor"
 
 ## Scenario
 
