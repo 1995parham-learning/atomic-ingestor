@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -25,7 +26,10 @@ func New(db *gorm.DB) *Storage {
 
 // AutoMigrate runs database migrations
 func (s *Storage) AutoMigrate() error {
-	return s.db.AutoMigrate(&File{})
+	if err := s.db.AutoMigrate(&File{}); err != nil {
+		return fmt.Errorf("auto migrate file table: %w", err)
+	}
+	return nil
 }
 
 // FileExists checks if a file with the given SHA256 already exists
@@ -36,7 +40,7 @@ func (s *Storage) FileExists(sha256 string) (bool, error) {
 		return false, nil
 	}
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("query file by sha256: %w", err)
 	}
 	return true, nil
 }
@@ -52,7 +56,10 @@ func (s *Storage) CreateFile(sha256, name, path string, size int64) error {
 		Path:   path,
 		Size:   size,
 	}
-	return s.db.Create(&file).Error
+	if err := s.db.Create(&file).Error; err != nil {
+		return fmt.Errorf("create file record: %w", err)
+	}
+	return nil
 }
 
 // Transaction wraps operations in a database transaction

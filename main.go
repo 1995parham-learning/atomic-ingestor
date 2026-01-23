@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
@@ -100,6 +103,19 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Set up context with cancellation for graceful shutdown
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Handle shutdown signals
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigChan
+		slog.Info("received shutdown signal", "signal", sig)
+		cancel()
+	}()
+
 	// Initialize processor
 	proc := processor.New(cfg, store, w)
 
@@ -107,8 +123,16 @@ func main() {
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		slog.Debug("checking for files to process")
-		proc.ProcessFiles()
+	slog.Info("atomic ingestor started, waiting for files")
+
+	for {
+		select {
+		case <-ctx.Done():
+			slog.Info("shutting down gracefully")
+			return
+		case <-ticker.C:
+			slog.Debug("checking for files to process")
+			proc.ProcessFiles()
+		}
 	}
 }

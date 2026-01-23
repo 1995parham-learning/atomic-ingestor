@@ -1,7 +1,9 @@
 package watcher
 
 import (
+	"fmt"
 	"log/slog"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -9,6 +11,36 @@ import (
 	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
 	"github.com/fsnotify/fsnotify"
 )
+
+// tempFileSuffixes lists file extensions that indicate temporary/incomplete files
+var tempFileSuffixes = []string{
+	".tmp",
+	".part",
+	".swp",
+	".crdownload",
+	".partial",
+	".download",
+	"~",
+}
+
+// shouldIgnoreFile returns true if the file should be ignored based on its name
+func shouldIgnoreFile(path string) bool {
+	name := filepath.Base(path)
+
+	// Ignore hidden files (starting with .)
+	if strings.HasPrefix(name, ".") {
+		return true
+	}
+
+	// Ignore temporary file patterns
+	for _, suffix := range tempFileSuffixes {
+		if strings.HasSuffix(name, suffix) {
+			return true
+		}
+	}
+
+	return false
+}
 
 type Watcher struct {
 	fsWatcher        *fsnotify.Watcher
@@ -22,7 +54,7 @@ type Watcher struct {
 func New(method, watchPath string, stabilitySeconds int) (*Watcher, error) {
 	fsWatcher, err := fsnotify.NewWatcher()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("create fsnotify watcher: %w", err)
 	}
 
 	w := &Watcher{
@@ -39,6 +71,8 @@ func New(method, watchPath string, stabilitySeconds int) (*Watcher, error) {
 		w.modification = &sync.Map{}
 	case config.MethodSidecar:
 		w.completed = &sync.Map{}
+	default:
+		return nil, fmt.Errorf("unknown watch method: %s", method)
 	}
 
 	return w, nil
@@ -47,9 +81,8 @@ func New(method, watchPath string, stabilitySeconds int) (*Watcher, error) {
 func (w *Watcher) Start() error {
 	go w.eventLoop()
 
-	err := w.fsWatcher.Add(w.watchPath)
-	if err != nil {
-		return err
+	if err := w.fsWatcher.Add(w.watchPath); err != nil {
+		return fmt.Errorf("add watch path %s: %w", w.watchPath, err)
 	}
 
 	return nil
@@ -66,16 +99,26 @@ func (w *Watcher) eventLoop() {
 			if !ok {
 				return
 			}
-			slog.Info("file system event", "event", event.Op.String(), "path", event.Name)
-			if event.Has(fsnotify.Create) {
-				if w.modification != nil {
-					w.modification.Store(event.Name, time.Now())
+
+			// Handle .ok sidecar files first (they signal completion of another file)
+			if w.completed != nil && strings.HasSuffix(event.Name, ".ok") {
+				if event.Has(fsnotify.Create) {
+					targetFile := strings.TrimSuffix(event.Name, ".ok")
+					slog.Debug("sidecar file detected", "sidecar", event.Name, "target", targetFile)
+					w.completed.Store(targetFile, true)
 				}
-				if w.completed != nil && strings.HasSuffix(event.Name, ".ok") {
-					w.completed.Store(strings.TrimSuffix(event.Name, ".ok"), true)
-				}
+				continue
 			}
-			if event.Has(fsnotify.Write) {
+
+			// Skip files that should be ignored (hidden, temp, etc.)
+			if shouldIgnoreFile(event.Name) {
+				slog.Debug("ignoring file", "path", event.Name, "reason", "hidden or temp file")
+				continue
+			}
+
+			slog.Debug("file system event", "event", event.Op.String(), "path", event.Name)
+
+			if event.Has(fsnotify.Create) || event.Has(fsnotify.Write) {
 				if w.modification != nil {
 					w.modification.Store(event.Name, time.Now())
 				}
