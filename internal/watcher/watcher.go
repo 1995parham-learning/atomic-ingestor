@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
+	"github.com/1995parham-learning/atomic-ingestor/internal/config"
 	"github.com/fsnotify/fsnotify"
 )
 

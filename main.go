@@ -9,10 +9,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/processor"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/storage"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/watcher"
+	"github.com/1995parham-learning/atomic-ingestor/internal/config"
+	"github.com/1995parham-learning/atomic-ingestor/internal/processor"
+	"github.com/1995parham-learning/atomic-ingestor/internal/storage"
+	"github.com/1995parham-learning/atomic-ingestor/internal/watcher"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )

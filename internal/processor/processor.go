@@ -8,11 +8,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/fileops"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/manifest"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/storage"
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/watcher"
+	"github.com/1995parham-learning/atomic-ingestor/internal/config"
+	"github.com/1995parham-learning/atomic-ingestor/internal/fileops"
+	"github.com/1995parham-learning/atomic-ingestor/internal/manifest"
+	"github.com/1995parham-learning/atomic-ingestor/internal/storage"
+	"github.com/1995parham-learning/atomic-ingestor/internal/watcher"
 )
 
 type Processor struct {

@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/1995parham-learning/interface-ai-coding-challenge/internal/config"
+	"github.com/1995parham-learning/atomic-ingestor/internal/config"
 )
 
 func TestShouldIgnoreFile(t *testing.T) {
