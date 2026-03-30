@@ -2,6 +2,7 @@
   <h1>Atomic Ingestor</h1>
   <h6>Filesystem Programming Challenge</h6>
   <img alt="GitHub Actions Workflow Status" src="https://img.shields.io/github/actions/workflow/status/1995parham-learning/atomic-ingestor/test.yml?style=for-the-badge&logo=github">
+  <img alt="Codecov" src="https://img.shields.io/codecov/c/github/1995parham-learning/atomic-ingestor?style=for-the-badge&logo=codecov">
 </div>
 
 ## Scenario
